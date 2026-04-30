@@ -1,0 +1,103 @@
+
+services:
+
+  # ────────────────────────────────────────────────────────────
+  # PostgreSQL + pgvector
+  # ────────────────────────────────────────────────────────────
+  # Base de datos vectorial para almacenar embeddings.
+  # Accesible en: localhost:5432
+  # Conexión:     postgresql+psycopg://postgres:postgres@localhost:5432/vectordb
+  # ────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vectordb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vectordb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────────────────────────────────
+  # Ollama — Modelos de IA locales
+  # ────────────────────────────────────────────────────────────
+  # Servidor de modelos locales (LLM + embeddings).
+  # API en: http://localhost:11434
+  #
+  # Modelos descargados automáticamente al iniciar:
+  #   - llama3.1:8b        → Chat (~4.7 GB, modelo muy robusto)
+  #   - nomic-embed-text   → Embeddings (274 MB)
+  #
+  # Para agregar más modelos:
+  #   docker exec rag-ollama ollama pull mistral:7b
+  #   docker exec rag-ollama ollama pull llama3.1:8b
+  # ────────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rag-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  # ────────────────────────────────────────────────────────────
+  # Init — Descarga automática de modelos
+  # ────────────────────────────────────────────────────────────
+  # Este servicio se ejecuta UNA VEZ al levantar el compose.
+  # Espera a que Ollama esté listo y descarga los modelos.
+  # Después de terminar, se detiene automáticamente.
+  # ────────────────────────────────────────────────────────────
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: rag-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "════════════════════════════════════════════"
+        echo "📦 Descargando modelos de Ollama..."
+        echo "════════════════════════════════════════════"
+
+        echo ""
+        echo "🤖 Descargando llama3.1:8b (chat, modelo muy robusto)..."
+        curl -s http://ollama:11434/api/pull -d '{"name": "llama3.1:8b"}' | tail -1
+        echo ""
+        echo "✅ llama3.1:8b listo"
+
+        echo ""
+        echo "🔢 Descargando nomic-embed-text (embeddings, ~274 MB)..."
+        curl -s http://ollama:11434/api/pull -d '{"name": "nomic-embed-text"}' | tail -1
+        echo ""
+        echo "✅ nomic-embed-text listo"
+
+        echo ""
+        echo "════════════════════════════════════════════"
+        echo "🎉 ¡Modelos descargados! Listo para usar."
+        echo ""
+        echo "  Usar con:"
+        echo "    python -m wikipedia_rag --provider ollama"
+        echo "════════════════════════════════════════════"
+
+volumes:
+  pgdata:
+    name: rag-pgdata
+  ollama_data:
+    name: rag-ollama-data
