@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph - Universidad EIA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/white.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--eia-blue:#003B5C;--eia-blue-light:#0066A1;--eia-accent:#4DA8DA;--eia-white:#FFFFFF;--eia-gray:#F0F4F8;--eia-dark:#001F33}
+.reveal{font-family:'Inter',sans-serif;color:var(--eia-blue)}
+.reveal .slides section{background:var(--eia-white)}
+.reveal h1,.reveal h2,.reveal h3{color:var(--eia-blue);font-weight:800;text-transform:none;letter-spacing:-0.02em}
+.reveal h1{font-size:2.2em}
+.reveal h2{font-size:1.6em;border-bottom:4px solid var(--eia-accent);padding-bottom:12px;display:inline-block}
+.reveal h3{font-size:1.2em;color:var(--eia-blue-light)}
+.reveal p,.reveal li{font-size:0.72em;line-height:1.6;color:#333}
+.reveal ul{list-style:none;padding-left:0}
+.reveal li::before{content:"▸ ";color:var(--eia-accent);font-weight:bold}
+.reveal code{font-size:0.65em;border-radius:6px}
+.reveal pre{box-shadow:0 8px 32px rgba(0,59,92,0.15);border-radius:10px;border:2px solid var(--eia-accent)}
+.reveal pre code{padding:20px;line-height:1.5}
+.slide-title{background:linear-gradient(135deg,var(--eia-blue) 0%,var(--eia-blue-light) 50%,var(--eia-accent) 100%)!important}
+.slide-title h1,.slide-title h2,.slide-title h3,.slide-title p{color:var(--eia-white)!important}
+.slide-section{background:linear-gradient(135deg,var(--eia-blue) 0%,var(--eia-blue-light) 100%)!important}
+.slide-section h2,.slide-section p{color:var(--eia-white)!important}
+.eia-logo{width:180px;margin-bottom:20px;filter:brightness(0) invert(1)}
+.eia-logo-dark{width:120px;position:fixed;bottom:20px;right:30px;opacity:0.15}
+.badge{display:inline-block;background:var(--eia-accent);color:#fff;padding:4px 14px;border-radius:20px;font-size:0.6em;font-weight:600;margin:3px}
+.card{background:var(--eia-gray);border-radius:12px;padding:20px;margin:10px;border-left:4px solid var(--eia-accent)}
+.card h3{margin-top:0;font-size:0.9em}
+.card p{font-size:0.65em;margin:0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.vs-table{width:100%;border-collapse:collapse;font-size:0.6em;margin-top:16px}
+.vs-table th{background:var(--eia-blue);color:#fff;padding:10px;text-align:left}
+.vs-table td{padding:8px 10px;border-bottom:1px solid #e0e0e0}
+.vs-table tr:nth-child(even){background:var(--eia-gray)}
+.node-flow{display:flex;align-items:center;justify-content:center;gap:8px;margin:20px 0;flex-wrap:wrap}
+.node{background:var(--eia-blue);color:#fff;padding:12px 20px;border-radius:10px;font-size:0.7em;font-weight:600}
+.node.active{background:var(--eia-accent)}
+.node.green{background:#10b981}
+.arrow{color:var(--eia-accent);font-size:1.4em;font-weight:bold}
+.highlight-box{background:linear-gradient(135deg,var(--eia-blue),var(--eia-blue-light));color:#fff;padding:20px;border-radius:12px;margin:16px 0;font-size:0.7em}
+.emoji{font-size:1.3em}
+.fragment-fade{opacity:0.3}
+.small{font-size:0.55em;color:#666}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- SLIDE 1: Portada -->
+<section class="slide-title">
+<img src="https://www.eia.edu.co/wp-content/uploads/2023/07/Logo-principal-scaled.webp" class="eia-logo" alt="Universidad EIA">
+<h1>LangGraph</h1>
+<h3>Agentes con Grafos de Estado</h3>
+<p>Especialización en Inteligencia Artificial — Universidad EIA</p>
+<p class="small" style="color:rgba(255,255,255,0.7)">2026</p>
+</section>
+
+<!-- SLIDE 2: Agenda -->
+<section>
+<h2>📋 Agenda</h2>
+<ul>
+<li>¿Qué es LangGraph?</li>
+<li>¿Por qué usar LangGraph?</li>
+<li>LangChain vs LangGraph — Comparación</li>
+<li>Conceptos clave: Estado, Nodos, Aristas</li>
+<li>Arquitectura del Grafo</li>
+<li>Implementación paso a paso</li>
+<li>Código del Agente RAG</li>
+<li>Código de la API FastAPI</li>
+<li>Demo y conclusiones</li>
+</ul>
+</section>
+
+<!-- SLIDE 3: ¿Qué es LangGraph? -->
+<section class="slide-section">
+<h2>🧠 ¿Qué es LangGraph?</h2>
+</section>
+
+<!-- SLIDE: Línea de tiempo -->
+<section>
+<h2>📅 Línea de Tiempo</h2>
+<div style="position:relative;margin:30px auto;max-width:900px">
+<div style="position:absolute;top:28px;left:5%;right:5%;height:4px;background:var(--eia-accent);border-radius:2px"></div>
+<div style="display:flex;justify-content:space-between;position:relative">
+<div style="text-align:center;width:18%">
+<div style="width:20px;height:20px;background:var(--eia-blue);border-radius:50%;margin:20px auto 10px;border:3px solid var(--eia-accent)"></div>
+<strong style="font-size:0.65em;color:var(--eia-blue)">2022</strong>
+<p style="font-size:0.5em;margin:4px 0">Nace <strong>LangChain</strong> como framework para cadenas LLM lineales</p>
+</div>
+<div style="text-align:center;width:18%">
+<div style="width:20px;height:20px;background:var(--eia-blue);border-radius:50%;margin:20px auto 10px;border:3px solid var(--eia-accent)"></div>
+<strong style="font-size:0.65em;color:var(--eia-blue)">Ene 2024</strong>
+<p style="font-size:0.5em;margin:4px 0">Lanzamiento de <strong>LangGraph v0.1</strong> — grafos de estado para agentes</p>
+</div>
+<div style="text-align:center;width:18%">
+<div style="width:20px;height:20px;background:var(--eia-blue);border-radius:50%;margin:20px auto 10px;border:3px solid var(--eia-accent)"></div>
+<strong style="font-size:0.65em;color:var(--eia-blue)">Jun 2024</strong>
+<p style="font-size:0.5em;margin:4px 0"><strong>LangGraph Cloud</strong> — despliegue de agentes como servicio</p>
+</div>
+<div style="text-align:center;width:18%">
+<div style="width:20px;height:20px;background:var(--eia-blue);border-radius:50%;margin:20px auto 10px;border:3px solid var(--eia-accent)"></div>
+<strong style="font-size:0.65em;color:var(--eia-blue)">2025</strong>
+<p style="font-size:0.5em;margin:4px 0"><strong>LangGraph v1.0</strong> — API estable, checkpointing, prebuilt agents</p>
+</div>
+<div style="text-align:center;width:18%">
+<div style="width:24px;height:24px;background:var(--eia-accent);border-radius:50%;margin:18px auto 10px;border:3px solid var(--eia-blue)"></div>
+<strong style="font-size:0.65em;color:var(--eia-accent)">2026</strong>
+<p style="font-size:0.5em;margin:4px 0"><strong>Hoy</strong> — Estándar de facto para agentes en producción</p>
+</div>
+</div>
+</div>
+<div class="highlight-box" style="margin-top:10px">
+<strong>📈 Evolución:</strong> LangChain resolvió cadenas simples → LangGraph resolvió flujos complejos con ciclos, estado y control.
+</div>
+</section>
+
+<!-- SLIDE 4 -->
+<section>
+<h2>¿Qué es LangGraph?</h2>
+<p>LangGraph es un framework de <strong>orquestación de agentes</strong> desarrollado por el equipo de LangChain para construir aplicaciones LLM como <strong>grafos de estado</strong>.</p>
+<div class="highlight-box">
+<strong>💡 En una frase:</strong> LangGraph te permite definir el flujo de tu agente como un grafo dirigido donde cada nodo es un paso del procesamiento y el estado fluye entre ellos.
+</div>
+<div class="grid-2">
+<div class="card">
+<h3>🏗️ Creado por</h3>
+<p>LangChain Inc. (mismo equipo de LangChain)</p>
+</div>
+<div class="card">
+<h3>📦 Paquete</h3>
+<p><code>poetry add langgraph</code></p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 5 -->
+<section>
+<h2>Analogía: El Grafo como Fábrica</h2>
+<p>Piensa en LangGraph como una <strong>línea de ensamblaje</strong>:</p>
+<div class="node-flow">
+<div class="node">📥 Entrada</div>
+<div class="arrow">→</div>
+<div class="node active">⚙️ Nodo 1</div>
+<div class="arrow">→</div>
+<div class="node active">⚙️ Nodo 2</div>
+<div class="arrow">→</div>
+<div class="node active">⚙️ Nodo 3</div>
+<div class="arrow">→</div>
+<div class="node green">📤 Salida</div>
+</div>
+<ul>
+<li>Cada <strong>nodo</strong> es una estación de trabajo (una función)</li>
+<li>El <strong>estado</strong> es la pieza que se mueve por la línea</li>
+<li>Las <strong>aristas</strong> son las conexiones entre estaciones</li>
+<li>El <strong>grafo</strong> es toda la fábrica</li>
+</ul>
+</section>
+
+<!-- SLIDE 6: ¿Por qué? -->
+<section class="slide-section">
+<h2>🤔 ¿Por qué usar LangGraph?</h2>
+</section>
+
+<!-- SLIDE 7 -->
+<section>
+<h2>¿Cuándo usar LangGraph?</h2>
+<div class="grid-2">
+<div class="card">
+<h3>✅ Usa LangGraph cuando...</h3>
+<p>• Necesitas flujos con <strong>ciclos o loops</strong><br>
+• Construyes <strong>agentes multi-paso</strong><br>
+• Requieres <strong>estado explícito</strong> y tipado<br>
+• Necesitas <strong>human-in-the-loop</strong><br>
+• Quieres <strong>depurar</strong> cada paso<br>
+• Vas a <strong>producción</strong></p>
+</div>
+<div class="card">
+<h3>⚡ Quédate con LangChain si...</h3>
+<p>• Tu flujo es <strong>lineal</strong> (A → B → C)<br>
+• Estás <strong>prototipando</strong> rápido<br>
+• Solo necesitas un <strong>chatbot simple</strong><br>
+• No requieres estado complejo<br>
+• Quieres <strong>máxima velocidad</strong> de desarrollo</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 8 -->
+<section>
+<h2>Ventajas de LangGraph</h2>
+<div class="grid-3">
+<div class="card">
+<h3>🔄 Ciclos</h3>
+<p>Permite loops y reintentos que LangChain no soporta nativamente.</p>
+</div>
+<div class="card">
+<h3>📊 Estado Tipado</h3>
+<p>TypedDict define exactamente qué datos fluyen por el grafo.</p>
+</div>
+<div class="card">
+<h3>🔍 Depuración</h3>
+<p>Inspecciona el estado en cada nodo del pipeline.</p>
+</div>
+<div class="card">
+<h3>🧩 Modular</h3>
+<p>Cada nodo es independiente, fácil de testear y reutilizar.</p>
+</div>
+<div class="card">
+<h3>👤 Human-in-loop</h3>
+<p>Pausa el grafo para aprobación humana antes de continuar.</p>
+</div>
+<div class="card">
+<h3>🚀 Producción</h3>
+<p>Diseñado para ser robusto, escalable y confiable.</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 9: Comparación -->
+<section class="slide-section">
+<h2>⚔️ LangChain vs LangGraph</h2>
+</section>
+
+<!-- SLIDE 10 -->
+<section>
+<h2>Comparación Directa</h2>
+<table class="vs-table">
+<thead>
+<tr><th>Característica</th><th>LangChain</th><th>LangGraph</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Estructura</strong></td><td>Cadenas lineales (DAG)</td><td>Grafos con ciclos</td></tr>
+<tr><td><strong>Estado</strong></td><td>Implícito / mínimo</td><td>Explícito y tipado</td></tr>
+<tr><td><strong>Flujo</strong></td><td>A → B → C</td><td>A → B → C ↩ A (loops)</td></tr>
+<tr><td><strong>Complejidad</strong></td><td>Baja — rápido de implementar</td><td>Media — más control</td></tr>
+<tr><td><strong>Depuración</strong></td><td>Limitada</td><td>Estado visible en cada nodo</td></tr>
+<tr><td><strong>Memoria</strong></td><td>RunnableWithMessageHistory</td><td>Estado global del grafo</td></tr>
+<tr><td><strong>Ideal para</strong></td><td>Prototipos, RAG simple</td><td>Agentes complejos, producción</td></tr>
+</tbody>
+</table>
+<p class="small">💡 En la práctica, se usan <strong>juntos</strong>: LangChain para los bloques y LangGraph para orquestarlos.</p>
+</section>
+
+<!-- SLIDE 11: Conceptos -->
+<section class="slide-section">
+<h2>🧱 Conceptos Clave</h2>
+</section>
+
+<!-- SLIDE 12: Estado -->
+<section>
+<h2>1. Estado (State)</h2>
+<p>El estado es un <strong>diccionario tipado</strong> que contiene toda la información que fluye por el grafo.</p>
+<pre><code class="language-python"># Se define con TypedDict para tener tipado estricto
+class AgentState(TypedDict):
+    input: str                    # Pregunta del usuario
+    chat_history: list[BaseMessage]  # Memoria
+    standalone_question: str      # Pregunta reformulada
+    context: str                  # Documentos recuperados
+    response: str                 # Respuesta final</code></pre>
+<div class="highlight-box">
+<strong>🎯 Clave:</strong> Cada nodo recibe el estado completo, lo procesa, y retorna SOLO las claves que quiere actualizar.
+</div>
+</section>
+
+<!-- SLIDE 13: Nodos -->
+<section>
+<h2>2. Nodos (Nodes)</h2>
+<p>Los nodos son <strong>funciones de Python</strong> que procesan el estado. Cada nodo hace UNA cosa.</p>
+<pre><code class="language-python"># Un nodo recibe el estado y retorna actualizaciones
+def recuperar_documentos(state: AgentState) -> dict:
+    """Busca documentos relevantes en pgvector."""
+    question = state["standalone_question"]
+    docs = retriever.invoke(question)
+    context = formatear_docs(docs)
+    return {"context": context}  # Solo actualiza 'context'</code></pre>
+<ul>
+<li><strong>Entrada:</strong> El estado global completo</li>
+<li><strong>Salida:</strong> Diccionario con las claves a actualizar</li>
+</ul>
+</section>
+
+<!-- SLIDE 14: Aristas -->
+<section>
+<h2>3. Aristas (Edges)</h2>
+<p>Las aristas definen las <strong>conexiones entre nodos</strong> — el flujo del grafo.</p>
+<pre><code class="language-python"># Construir el grafo
+graph = StateGraph(AgentState)
+
+# Agregar nodos
+graph.add_node("reformular", reformular_pregunta)
+graph.add_node("recuperar", recuperar_documentos)
+graph.add_node("responder", generar_respuesta)
+
+# Definir aristas (conexiones)
+graph.add_edge(START, "reformular")
+graph.add_edge("reformular", "recuperar")
+graph.add_edge("recuperar", "responder")
+graph.add_edge("responder", END)
+
+# Compilar
+app = graph.compile()</code></pre>
+</section>
+
+<!-- SLIDE: Aristas Condicionales -->
+<section>
+<h2>4. Aristas Condicionales</h2>
+<p>Las aristas condicionales son una de las <strong>características más poderosas</strong> de LangGraph. Permiten que el flujo tome <strong>caminos diferentes</strong> según el estado.</p>
+<pre><code class="language-python"># Función que decide el próximo nodo
+def decidir_ruta(state: AgentState) -> str:
+    """Evalúa el estado y decide a dónde ir."""
+    if state["context"] == "No se encontró información":
+        return "sin_info"     # → Nodo de respuesta sin info
+    return "responder"        # → Nodo de respuesta normal
+
+# Agregar arista condicional al grafo
+graph.add_conditional_edges(
+    "recuperar",              # Nodo de origen
+    decidir_ruta,             # Función de decisión
+    {                         # Mapa de rutas
+        "sin_info": "disculpar",
+        "responder": "responder"
+    }
+)</code></pre>
+<div class="node-flow">
+<div class="node">🔍 Recuperar</div>
+<div class="arrow">→</div>
+<div class="node" style="background:#e67e22">🔀 Decisión</div>
+<div class="arrow">→</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="node green">💬 Responder</div>
+<div class="node" style="background:#e74c3c">🚫 Disculpar</div>
+</div>
+</div>
+<p class="small">💡 Esto permite <strong>branching</strong>, <strong>loops de reintento</strong>, <strong>validación</strong> y <strong>human-in-the-loop</strong>.</p>
+</section>
+
+<!-- SLIDE 15: Arquitectura -->
+<section class="slide-section">
+<h2>🏗️ Arquitectura del Agente</h2>
+</section>
+
+<!-- SLIDE 16: Flujo visual -->
+<section>
+<h2>Flujo del Grafo RAG</h2>
+<div class="node-flow">
+<div class="node" style="background:#666">START</div>
+<div class="arrow">→</div>
+<div class="node">🔄 Reformular</div>
+<div class="arrow">→</div>
+<div class="node active">🔍 Recuperar</div>
+<div class="arrow">→</div>
+<div class="node green">💬 Responder</div>
+<div class="arrow">→</div>
+<div class="node" style="background:#666">END</div>
+</div>
+<div class="grid-3">
+<div class="card">
+<h3>🔄 Reformular</h3>
+<p>Si hay historial, reformula la pregunta para que sea autocontenida. Sin historial, la pasa directo.</p>
+</div>
+<div class="card">
+<h3>🔍 Recuperar</h3>
+<p>Busca los 3 documentos más similares en PostgreSQL con pgvector.</p>
+</div>
+<div class="card">
+<h3>💬 Responder</h3>
+<p>Genera respuesta SOLO con el contexto de los documentos encontrados.</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 17: Código -->
+<section class="slide-section">
+<h2>💻 Código: agent_graph.py</h2>
+</section>
+
+<!-- SLIDE 18 -->
+<section>
+<h2>Definición del Estado</h2>
+<pre><code class="language-python">from typing import TypedDict
+from langchain_core.messages import BaseMessage
+
+class AgentState(TypedDict):
+    """Estado global del agente — fluye entre todos los nodos."""
+    input: str                       # Pregunta original
+    chat_history: list[BaseMessage]  # Memoria de la sesión
+    standalone_question: str         # Pregunta independiente
+    context: str                     # Docs recuperados
+    response: str                    # Respuesta final</code></pre>
+<p>El estado es el <strong>contrato</strong> entre todos los nodos. Cada nodo sabe exactamente qué datos esperar y qué datos producir.</p>
+</section>
+
+<!-- SLIDE 19 -->
+<section>
+<h2>Nodo: Reformular Pregunta</h2>
+<pre><code class="language-python">def reformular_pregunta(state: AgentState) -> dict:
+    chat_history = state.get("chat_history", [])
+    user_input = state["input"]
+
+    # Optimización: sin historial, no reformular
+    if not chat_history:
+        return {"standalone_question": user_input}
+
+    # Con historial: usar LLM para reformular
+    llm = _create_llm()
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", CONTEXTUALIZE_PROMPT),
+        MessagesPlaceholder("chat_history"),
+        ("human", "{input}")
+    ])
+    chain = prompt | llm | StrOutputParser()
+    standalone = chain.invoke({
+        "input": user_input,
+        "chat_history": chat_history
+    })
+    return {"standalone_question": standalone}</code></pre>
+</section>
+
+<!-- SLIDE 20 -->
+<section>
+<h2>Nodo: Recuperar Documentos</h2>
+<pre><code class="language-python">def recuperar_documentos(state: AgentState) -> dict:
+    retriever = _create_retriever()
+    question = state["standalone_question"]
+
+    # Búsqueda por similitud en pgvector
+    docs = retriever.invoke(question)
+
+    if not docs:
+        context = "No se encontró información relevante."
+    else:
+        formatted = []
+        for i, doc in enumerate(docs, 1):
+            source = doc.metadata.get("source", "?")
+            source = source.split("/")[-1]
+            formatted.append(
+                f"[Doc {i} — {source}]\n{doc.page_content}"
+            )
+        context = "\n\n".join(formatted)
+
+    return {"context": context}</code></pre>
+</section>
+
+<!-- SLIDE 21 -->
+<section>
+<h2>Nodo: Generar Respuesta</h2>
+<pre><code class="language-python">def generar_respuesta(state: AgentState) -> dict:
+    llm = _create_llm()
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", SYSTEM_PROMPT),  # Incluye {context}
+        MessagesPlaceholder("chat_history"),
+        ("human", "{input}")
+    ])
+    chain = prompt | llm | StrOutputParser()
+
+    response = chain.invoke({
+        "input": state["input"],
+        "context": state["context"],
+        "chat_history": state.get("chat_history", [])
+    })
+    return {"response": response}</code></pre>
+<p class="small">El prompt del sistema instruye al LLM a responder SOLO con información del contexto proporcionado.</p>
+</section>
+
+<!-- SLIDE 22 -->
+<section>
+<h2>Compilación del Grafo</h2>
+<pre><code class="language-python">def build_graph():
+    # 1. Crear el grafo con el tipo de estado
+    graph = StateGraph(AgentState)
+
+    # 2. Agregar nodos (funciones)
+    graph.add_node("reformular", reformular_pregunta)
+    graph.add_node("recuperar", recuperar_documentos)
+    graph.add_node("responder", generar_respuesta)
+
+    # 3. Definir aristas (flujo)
+    graph.add_edge(START, "reformular")
+    graph.add_edge("reformular", "recuperar")
+    graph.add_edge("recuperar", "responder")
+    graph.add_edge("responder", END)
+
+    # 4. Compilar y retornar
+    return graph.compile()</code></pre>
+</section>
+
+<!-- SLIDE 23 -->
+<section>
+<h2>Función de Chat con Memoria</h2>
+<pre><code class="language-python">def chat(question: str, session_id: str = "default") -> str:
+    graph = get_graph()
+    history = get_session_history(session_id)
+
+    # Ejecutar el grafo completo
+    result = graph.invoke({
+        "input": question,
+        "chat_history": history,
+        "standalone_question": "",
+        "context": "",
+        "response": ""
+    })
+
+    # Guardar en memoria
+    history.append(HumanMessage(content=question))
+    history.append(AIMessage(content=result["response"]))
+
+    return result["response"]</code></pre>
+</section>
+
+<!-- SLIDE 24: API -->
+<section class="slide-section">
+<h2>🌐 Código: api_graph.py</h2>
+</section>
+
+<!-- SLIDE 25 -->
+<section>
+<h2>API FastAPI — Endpoint de Chat</h2>
+<pre><code class="language-python">@app.post("/chat", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest):
+    """Ejecuta el grafo LangGraph completo."""
+    try:
+        respuesta = agent_chat(
+            request.pregunta,
+            request.session_id
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error: {str(e)}"
+        )
+    return ChatResponse(
+        respuesta=respuesta,
+        session_id=request.session_id
+    )</code></pre>
+<p>Para correr el API:</p>
+<pre><code class="language-bash">poetry run uvicorn local_rag.api_graph:app --reload --port 8000</code></pre>
+</section>
+
+<!-- SLIDE 26 -->
+<section>
+<h2>Endpoints Disponibles</h2>
+<table class="vs-table">
+<thead>
+<tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+</thead>
+<tbody>
+<tr><td><span class="badge">POST</span></td><td>/chat</td><td>Enviar pregunta al agente</td></tr>
+<tr><td><span class="badge">POST</span></td><td>/ingest</td><td>Ingestar documentos</td></tr>
+<tr><td><span class="badge" style="background:var(--eia-blue)">GET</span></td><td>/sessions</td><td>Listar sesiones activas</td></tr>
+<tr><td><span class="badge" style="background:var(--eia-blue)">GET</span></td><td>/sessions/{id}</td><td>Ver historial</td></tr>
+<tr><td><span class="badge" style="background:#e74c3c">DELETE</span></td><td>/sessions/{id}</td><td>Borrar sesión</td></tr>
+<tr><td><span class="badge" style="background:#10b981">GET</span></td><td>/health</td><td>Estado del servicio</td></tr>
+</tbody>
+</table>
+<p>Swagger UI: <code>http://localhost:8000/docs</code></p>
+</section>
+
+<!-- SLIDE 27: Stack -->
+<section>
+<h2>Stack Tecnológico</h2>
+<div class="grid-3">
+<div class="card"><h3>🧠 LangGraph</h3><p>Orquestación del agente como grafo de estados</p></div>
+<div class="card"><h3>🦜 LangChain</h3><p>Bloques: prompts, loaders, parsers</p></div>
+<div class="card"><h3>🦙 Ollama</h3><p>LLM local: llama3.1:8b + nomic-embed-text</p></div>
+<div class="card"><h3>🐘 PostgreSQL</h3><p>pgvector para búsqueda semántica</p></div>
+<div class="card"><h3>⚡ FastAPI</h3><p>API REST con docs automáticas</p></div>
+<div class="card"><h3>🐳 Docker</h3><p>Compose para servicios</p></div>
+</div>
+</section>
+
+<!-- SLIDE 28: Conclusiones -->
+<section class="slide-section">
+<h2>📝 Conclusiones</h2>
+</section>
+
+<!-- SLIDE 29 -->
+<section>
+<h2>Resumen</h2>
+<ul>
+<li><strong>LangGraph</strong> orquesta agentes como grafos de estado dirigidos</li>
+<li>El <strong>estado tipado</strong> (TypedDict) hace el flujo predecible</li>
+<li>Los <strong>nodos</strong> son funciones puras que procesan el estado</li>
+<li>Las <strong>aristas</strong> definen el flujo entre nodos</li>
+<li>Se combina con <strong>LangChain</strong> para los bloques individuales</li>
+<li>Ideal para <strong>producción</strong>: depurable, extensible, robusto</li>
+</ul>
+<div class="highlight-box">
+<strong>🎯 Regla de oro:</strong> Usa LangChain para construir los bloques, LangGraph para orquestar el flujo.
+</div>
+</section>
+
+<!-- SLIDE 30: Cierre -->
+<section class="slide-title">
+<img src="https://www.eia.edu.co/wp-content/uploads/2023/07/Logo-principal-scaled.webp" class="eia-logo" alt="Universidad EIA">
+<h1>¡Gracias!</h1>
+<h3>¿Preguntas?</h3>
+<p>Universidad EIA — Implementación e Integración de Software</p>
+<p style="margin-top:30px">
+<span class="badge" style="font-size:0.8em">LangGraph</span>
+<span class="badge" style="font-size:0.8em">LangChain</span>
+<span class="badge" style="font-size:0.8em">Ollama</span>
+<span class="badge" style="font-size:0.8em">pgvector</span>
+<span class="badge" style="font-size:0.8em">FastAPI</span>
+</p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script>
+Reveal.initialize({
+hash:true,
+slideNumber:'c/t',
+transition:'slide',
+plugins:[RevealHighlight],
+width:1200,
+height:700
+});
+</script>
+</body>
+</html>
