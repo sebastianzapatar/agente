@@ -32,8 +32,8 @@
 ├── 📁 local_rag/             # 🧠 Módulo principal del RAG
 │   ├── config.py             #    ⚙️  Configuración centralizada
 │   ├── ingest.py             #    📥 Ingesta y vectorización de documentos
-│   ├── agent.py              #    🤖 Agente conversacional (WIP)
-│   └── api.py                #    🌐 API REST con FastAPI (WIP)
+│   ├── agent.py              #    🤖 Agente RAG con memoria conversacional
+│   └── api.py                #    🌐 API REST con FastAPI
 ├── 📁 src/sinrodilla/        # 📦 Paquete principal
 ├── 📁 tests/                 # 🧪 Tests
 ├── ejemplo.py                # 💡 Ejemplo con OpenAI
@@ -136,6 +136,55 @@ Proceso completado, los documentos han sido ingestado y almacenados en la base d
 
 ---
 
+## 🌐 API REST
+
+### Levantar el servidor
+
+```bash
+poetry run uvicorn local_rag.api:app --reload --port 8000
+```
+
+Documentación interactiva (Swagger UI): [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### Endpoints disponibles
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/chat` | Enviar pregunta al agente RAG |
+| `POST` | `/ingest` | Ingestar documentos de la carpeta `documentos/` |
+| `GET` | `/sessions` | Listar sesiones de conversación activas |
+| `GET` | `/sessions/{id}` | Ver historial de una sesión |
+| `DELETE` | `/sessions/{id}` | Eliminar historial de una sesión |
+| `GET` | `/health` | Estado del servicio |
+
+### Ejemplos de uso con curl
+
+**Ingestar documentos:**
+```bash
+curl -X POST http://localhost:8000/ingest
+```
+
+**Hacer una pregunta:**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"pregunta": "¿De qué tratan los documentos?", "session_id": "mi-sesion"}'
+```
+
+**Pregunta de seguimiento (usa memoria):**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"pregunta": "¿Puedes darme más detalles?", "session_id": "mi-sesion"}'
+```
+
+**Ver historial de una sesión:**
+```bash
+curl http://localhost:8000/sessions/mi-sesion
+```
+
+---
+
 ## 🛠️ Tecnologías
 
 | Tecnología | Rol |
@@ -147,7 +196,7 @@ Proceso completado, los documentos han sido ingestado y almacenados en la base d
 | **PostgreSQL + pgvector** | Almacenamiento y búsqueda vectorial |
 | **Poetry** | Gestión de dependencias |
 | **Docker Compose** | Orquestación de servicios |
-| **FastAPI** | API REST (en desarrollo) |
+| **FastAPI** | API REST |
 | **python-dotenv** | Carga de variables desde `.env` |
 
 ---
@@ -244,8 +293,9 @@ poetry run python ejemplo.py
 - [x] Generación de embeddings con Ollama
 - [x] Almacenamiento vectorial en PostgreSQL
 - [x] Búsqueda por similitud semántica
-- [ ] Agente conversacional con memoria
-- [ ] API REST con FastAPI
+- [x] Agente conversacional con memoria
+- [x] API REST con FastAPI
+- [x] Ingesta de documentos desde la API
 - [ ] Frontend web para consultas
 - [ ] Soporte para más formatos (DOCX, Markdown)
 
