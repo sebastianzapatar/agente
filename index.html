@@ -1,564 +1,778 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Search Type en LangChain + PGVector</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>sinrodilla — RAG Local con LangChain + PGVector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --azul-eia: #003A70;
-      --azul-claro: #0B6FA4;
-      --verde: #19A974;
-      --naranja: #F4A261;
-      --rojo: #E76F51;
-      --gris: #F5F7FA;
-      --texto: #1F2937;
-      --blanco: #FFFFFF;
-      --morado: #6D5DF6;
+      --azul:   #003A70; --azul2: #0B6FA4; --verde: #059669;
+      --ambar:  #D97706; --rojo:  #DC2626; --morado:#7C3AED;
+      --fondo:  #F8FAFC; --texto: #0F172A; --suave: #64748B;
+      --borde:  #E2E8F0; --blanco:#FFFFFF;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * {
-      box-sizing: border-box;
-    }
+    html, body { width:100%; height:100%; overflow:hidden; font-family:"Inter",system-ui,sans-serif; }
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--gris);
-      color: var(--texto);
-      line-height: 1.6;
-    }
-
-    header {
-      background: linear-gradient(135deg, var(--azul-eia), var(--azul-claro));
-      color: var(--blanco);
-      padding: 56px 8%;
-      text-align: center;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 3rem;
-      line-height: 1.1;
-    }
-
-    header p {
-      max-width: 900px;
-      margin: 20px auto 0;
-      font-size: 1.25rem;
-      opacity: 0.95;
-    }
-
-    nav {
-      background: var(--blanco);
-      padding: 14px 8%;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    /* ── SLIDESHOW ── */
+    #deck {
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    nav a {
-      text-decoration: none;
-      color: var(--azul-eia);
-      font-weight: bold;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: #EAF2F8;
-      transition: all 0.2s ease;
-    }
-
-    nav a:hover {
-      background: var(--azul-eia);
-      color: var(--blanco);
-    }
-
-    section {
-      padding: 56px 8%;
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    .slide {
-      background: var(--blanco);
-      border-radius: 24px;
-      padding: 36px;
-      margin-bottom: 36px;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
-    }
-
-    .slide h2 {
-      color: var(--azul-eia);
-      font-size: 2rem;
-      margin-top: 0;
-      border-left: 8px solid var(--azul-claro);
-      padding-left: 16px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 22px;
-      margin-top: 24px;
-    }
-
-    .card {
-      background: #F9FAFB;
-      border: 1px solid #E5E7EB;
-      border-radius: 18px;
-      padding: 22px;
-      min-height: 180px;
-    }
-
-    .card h3 {
-      margin-top: 0;
-      color: var(--azul-eia);
-    }
-
-    .tag {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 999px;
-      color: white;
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-bottom: 12px;
-    }
-
-    .tag-blue { background: var(--azul-claro); }
-    .tag-green { background: var(--verde); }
-    .tag-orange { background: var(--naranja); color: #1F2937; }
-    .tag-purple { background: var(--morado); }
-    .tag-red { background: var(--rojo); }
-
-    pre {
-      background: #111827;
-      color: #E5E7EB;
-      padding: 20px;
-      border-radius: 16px;
-      overflow-x: auto;
-      font-size: 0.95rem;
-    }
-
-    code {
-      font-family: Consolas, Monaco, 'Courier New', monospace;
-    }
-
-    table {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 24px;
-      overflow: hidden;
-      border-radius: 14px;
+      height: 100%;
+      transition: transform .45s cubic-bezier(.4,0,.2,1);
+    }
+    .slide {
+      flex: 0 0 100vw;
+      width: 100vw;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0;
+      scroll-behavior: smooth;
+    }
+    /* scrollbar discreta */
+    .slide::-webkit-scrollbar { width: 5px; }
+    .slide::-webkit-scrollbar-thumb { background: var(--borde); border-radius: 9px; }
+
+    /* ── UI OVERLAY ── */
+    #ui {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px;
+      background: rgba(2,8,23,.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    #btn-prev, #btn-next {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.8);
+      border-radius: 10px;
+      padding: 8px 18px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+      font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #btn-prev:hover, #btn-next:hover { background: var(--azul2); color: #fff; border-color: var(--azul2); }
+    #btn-prev:disabled, #btn-next:disabled { opacity: .25; cursor: not-allowed; }
+
+    #dots { display: flex; gap: 8px; align-items: center; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      cursor: pointer; transition: all .2s;
+    }
+    .dot.active { background: #67E8F9; transform: scale(1.35); }
+    .dot:hover:not(.active) { background: rgba(255,255,255,.45); }
+
+    #counter {
+      color: rgba(255,255,255,.45);
+      font-size: .78rem;
+      font-family: "JetBrains Mono",monospace;
+      min-width: 50px; text-align: center;
     }
 
-    th, td {
-      padding: 16px;
-      border: 1px solid #E5E7EB;
-      vertical-align: top;
+    /* ── CONTENIDO DE SLIDES ── */
+    .slide-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 52px 7% 100px;
     }
 
-    th {
-      background: var(--azul-eia);
+    /* SLIDE PORTADA */
+    .slide-cover {
+      background: #020817;
       color: white;
-      text-align: left;
-    }
-
-    tr:nth-child(even) {
-      background: #F9FAFB;
-    }
-
-    .highlight {
-      background: #EAF2F8;
-      border-left: 6px solid var(--azul-claro);
-      padding: 18px;
-      border-radius: 12px;
-      margin: 20px 0;
-    }
-
-    .warning {
-      background: #FFF7ED;
-      border-left: 6px solid var(--naranja);
-      padding: 18px;
-      border-radius: 12px;
-      margin: 20px 0;
-    }
-
-    .success {
-      background: #ECFDF5;
-      border-left: 6px solid var(--verde);
-      padding: 18px;
-      border-radius: 12px;
-      margin: 20px 0;
-    }
-
-    .flow {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    .flow span {
-      background: var(--azul-eia);
-      color: white;
-      padding: 12px 18px;
-      border-radius: 14px;
-      font-weight: bold;
-    }
-
-    .arrow {
-      color: var(--azul-eia);
-      font-weight: bold;
-      font-size: 1.5rem;
-    }
-
-    footer {
-      background: var(--azul-eia);
-      color: white;
+      display: flex; align-items: center; justify-content: center;
       text-align: center;
-      padding: 30px;
-      margin-top: 50px;
+      padding-bottom: 80px;
+    }
+    .slide-cover .inner {
+      max-width: 760px;
+      padding: 0 7%;
+      position: relative; z-index: 1;
+    }
+    .slide-cover::before {
+      content:""; position:absolute; inset:0;
+      background:
+        radial-gradient(ellipse 70% 60% at 20% 50%,rgba(11,111,164,.35) 0%,transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 40%,rgba(124,58,237,.25) 0%,transparent 70%);
+      animation: glow 10s ease-in-out infinite alternate;
+    }
+    @keyframes glow { from{opacity:.7} to{opacity:1} }
+    .eyebrow {
+      display:inline-flex; align-items:center; gap:8px;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+      padding:6px 18px; border-radius:999px; font-size:.78rem; font-weight:600;
+      letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.75);
+      margin-bottom:24px;
+    }
+    .blink { width:8px;height:8px;border-radius:50%;background:#10B981;animation:blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .cover-title { font-size:clamp(2.4rem,6vw,3.8rem); font-weight:800; line-height:1.1; letter-spacing:-.03em; margin-bottom:18px; }
+    .cover-title .proj { color:#67E8F9; }
+    .cover-sub { color:rgba(255,255,255,.5); font-weight:400; font-size:.45em; display:block; margin-top:10px; letter-spacing:.01em; }
+    .cover-desc { color:rgba(255,255,255,.6); font-size:1rem; line-height:1.75; margin-bottom:32px; }
+    .stack { display:flex; flex-wrap:wrap; justify-content:center; gap:9px; }
+    .stack span {
+      background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+      color:rgba(255,255,255,.7); font-size:.75rem; font-weight:600;
+      padding:5px 14px; border-radius:6px; font-family:"JetBrains Mono",monospace;
+    }
+    .hint { margin-top:36px; color:rgba(255,255,255,.3); font-size:.8rem; letter-spacing:.04em; }
+    .hint kbd {
+      display:inline-block; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+      padding:3px 10px; border-radius:6px; font-family:"JetBrains Mono",monospace; font-size:.75rem;
     }
 
-    @media (max-width: 768px) {
-      header h1 {
-        font-size: 2.1rem;
-      }
+    /* SLIDES NORMALES */
+    .slide-title {
+      font-size:clamp(1.5rem,3.5vw,2.2rem); font-weight:800;
+      color:var(--texto); letter-spacing:-.02em; line-height:1.2;
+      margin-bottom:8px;
+    }
+    .slide-cat {
+      font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--suave); margin-bottom:24px; display:block;
+    }
+    .slide-desc { color:var(--suave); margin-bottom:24px; font-size:.97rem; line-height:1.75; }
 
-      .slide {
-        padding: 24px;
-      }
+    /* cards */
+    .card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; margin:20px 0; }
+    .card {
+      background:var(--blanco); border:1px solid var(--borde); border-radius:14px;
+      padding:22px; transition:box-shadow .2s,transform .2s;
+    }
+    .card:hover { box-shadow:0 6px 20px rgba(0,58,112,.08); transform:translateY(-2px); }
+    .card .icon { font-size:1.5rem; margin-bottom:10px; }
+    .card h3 { font-size:.95rem; font-weight:700; margin-bottom:8px; }
+    .card p  { font-size:.85rem; color:var(--suave); line-height:1.6; }
+    .card pre { margin-top:12px; }
 
-      section {
-        padding: 36px 5%;
-      }
+    /* alertas */
+    .nota,.warn,.ok,.tip {
+      border-radius:10px; padding:14px 18px; font-size:.88rem;
+      margin:18px 0; display:flex; gap:12px; align-items:flex-start; line-height:1.65;
+    }
+    .nota{background:#EFF6FF;border-left:4px solid var(--azul2);color:#1e40af}
+    .warn{background:#FFFBEB;border-left:4px solid var(--ambar);color:#92400e}
+    .ok  {background:#ECFDF5;border-left:4px solid var(--verde);color:#065f46}
+    .tip {background:#F5F3FF;border-left:4px solid var(--morado);color:#5B21B6}
+    .nota span,.warn span,.ok span,.tip span{font-size:1.15rem;flex-shrink:0}
+
+    /* code */
+    .code-label {
+      display:inline-block; background:#21262D; color:#8B949E;
+      font-size:.7rem; font-family:"JetBrains Mono",monospace;
+      padding:4px 12px; border-radius:6px 6px 0 0; margin-bottom:-4px;
+    }
+    pre {
+      background:#0D1117; color:#CDD9E5; border-radius:0 12px 12px 12px;
+      padding:20px; font-size:.8rem; line-height:1.75; overflow-x:auto;
+      font-family:"JetBrains Mono",monospace; border:1px solid #21262D; margin:6px 0 16px;
+    }
+    .kw{color:#FF7B72}.fn{color:#79C0FF}.st{color:#A5D6FF}.cm{color:#8B949E;font-style:italic}
+    .nr{color:#F2CC60}.cl{color:#FFA657}.at{color:#7EE787}
+
+    /* table */
+    table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.85rem}
+    th,td{padding:12px 16px;border:1px solid var(--borde);text-align:left;vertical-align:top}
+    th{background:var(--azul);color:white;font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}
+    tr:nth-child(even){background:#F8FAFC}
+    td code{background:#F1F5F9;padding:2px 6px;border-radius:4px;font-family:"JetBrains Mono",monospace;font-size:.79rem}
+
+    /* flujo */
+    .flujo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0}
+    .fn2{background:var(--azul);color:white;padding:9px 16px;border-radius:10px;font-weight:700;font-size:.82rem}
+    .fn2.alt{background:var(--morado)}.fn2.ok{background:var(--verde)}.fn2.wa{background:var(--ambar);color:var(--texto)}
+    .arr{color:var(--suave);font-size:1.1rem}
+
+    /* score bars */
+    .score-viz{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+    .score-row{display:flex;align-items:center;gap:12px}
+    .score-lbl{flex:0 0 200px;font-size:.82rem;color:var(--suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .score-track{flex:1;background:var(--borde);border-radius:999px;height:10px;overflow:hidden}
+    .score-fill{height:100%;border-radius:999px}
+    .score-val{flex:0 0 38px;font-size:.78rem;font-weight:700;font-family:"JetBrains Mono",monospace;text-align:right}
+
+    /* section accent line */
+    .accent { height:4px; width:52px; border-radius:2px; background:var(--azul2); margin-bottom:20px; }
+
+    @media(max-width:640px){
+      .slide-inner{padding:40px 5% 90px}
+      .score-lbl{flex:0 0 120px}
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Search Type en LangChain + PGVector</h1>
-    <p>Cómo usar <strong>similarity</strong>, <strong>mmr</strong> y <strong>similarity_score_threshold</strong> en un sistema RAG con PostgreSQL y pgvector.</p>
-  </header>
 
-  <nav>
-    <a href="#contexto">Contexto</a>
-    <a href="#similarity">Similarity</a>
-    <a href="#mmr">MMR</a>
-    <a href="#threshold">Threshold</a>
-    <a href="#comparacion">Comparación</a>
-    <a href="#recomendacion">Recomendación</a>
-  </nav>
+<div id="deck">
 
-  <section id="contexto">
-    <div class="slide">
-      <h2>1. Contexto: ¿qué hace un retriever?</h2>
-      <p>En LangChain, un <strong>retriever</strong> es el componente encargado de buscar documentos relevantes para una pregunta del usuario.</p>
-
-      <div class="flow">
-        <span>Pregunta</span>
-        <div class="arrow">→</div>
-        <span>Embedding</span>
-        <div class="arrow">→</div>
-        <span>PGVector</span>
-        <div class="arrow">→</div>
-        <span>Documentos relevantes</span>
-        <div class="arrow">→</div>
-        <span>LLM responde</span>
-      </div>
-
-      <div class="highlight">
-        <strong>Idea clave:</strong> <code>search_type</code> define la estrategia de búsqueda que usará el retriever para seleccionar los documentos.
-      </div>
-
-      <pre><code>retriever = vector_store.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 5}
-)</code></pre>
+<!-- ══════════ SLIDE 0: PORTADA ══════════ -->
+<div class="slide slide-cover">
+  <div class="inner">
+    <div class="eyebrow"><span class="blink"></span>Proyecto activo — Universidad EIA</div>
+    <div class="cover-title">
+      <span class="proj">sinrodilla</span>
+      <span class="cover-sub">RAG local · LangChain · Ollama · PostgreSQL + pgvector</span>
     </div>
+    <p class="cover-desc">
+      Un agente que responde preguntas usando tus propios documentos, sin mandar nada a la nube.
+      Todo corre en tu máquina: el modelo, los embeddings y la base de datos vectorial.
+    </p>
+    <div class="stack">
+      <span>Ollama</span><span>nomic-embed-text</span><span>llama3 / qwen</span>
+      <span>LangChain</span><span>PGVector</span><span>PostgreSQL</span><span>FastAPI</span>
+    </div>
+    <p class="hint"><kbd>←</kbd> &nbsp; <kbd>→</kbd> &nbsp; para navegar entre diapositivas</p>
+  </div>
+</div>
 
-    <div class="slide">
-      <h2>2. ¿Qué es <code>search_kwargs</code>?</h2>
-      <p><code>search_kwargs</code> es un diccionario con parámetros adicionales para la búsqueda.</p>
-
-      <div class="grid">
-        <div class="card">
-          <span class="tag tag-blue">k</span>
-          <h3>Número de documentos</h3>
-          <p><code>k</code> indica cuántos documentos o chunks quieres recuperar.</p>
-          <pre><code>search_kwargs={"k": 5}</code></pre>
-        </div>
-
-        <div class="card">
-          <span class="tag tag-green">filter</span>
-          <h3>Filtro por metadata</h3>
-          <p>Permite buscar solo dentro de documentos que cumplan cierta condición.</p>
-          <pre><code>search_kwargs={
-  "k": 5,
-  "filter": {"tema": {"$eq": "rag"}}
-}</code></pre>
-        </div>
-
-        <div class="card">
-          <span class="tag tag-purple">threshold</span>
-          <h3>Umbral mínimo</h3>
-          <p>Se usa con <code>similarity_score_threshold</code> para descartar documentos poco relevantes.</p>
-          <pre><code>search_kwargs={
-  "k": 5,
-  "score_threshold": 0.70
-}</code></pre>
-        </div>
+<!-- ══════════ SLIDE 1: ¿QUÉ ES RAG? ══════════ -->
+<div class="slide" style="background:var(--fondo)">
+  <div class="slide-inner">
+    <div class="accent"></div>
+    <div class="slide-title">¿Por qué RAG y no solo un LLM?</div>
+    <span class="slide-cat">01 — Motivación</span>
+    <p class="slide-desc">
+      Los modelos como <em>llama3</em> o <em>qwen</em> saben mucho del mundo general,
+      pero no saben nada de <strong>tus documentos</strong>: tu reglamento, tus PDFs, tu base interna.
+      RAG une lo mejor de los dos mundos.
+    </p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">🧠</div>
+        <h3>LLM solo</h3>
+        <p>Sabe del mundo hasta la fecha de entrenamiento. Si le preguntas algo privado o reciente, <em>inventa</em>.</p>
+      </div>
+      <div class="card">
+        <div class="icon">📄</div>
+        <h3>Tus documentos</h3>
+        <p>Tienes PDFs, manuales, normativas. Información que ningún modelo público conoce.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3>RAG = los dos</h3>
+        <p><strong>Retrieval Augmented Generation</strong>: primero busca en tus docs, luego el LLM responde con ese contexto.</p>
       </div>
     </div>
-  </section>
+    <div class="flujo">
+      <div class="fn2">Pregunta</div><div class="arr">→</div>
+      <div class="fn2 alt">Busca en PGVector</div><div class="arr">→</div>
+      <div class="fn2">Docs relevantes</div><div class="arr">→</div>
+      <div class="fn2 ok">LLM responde con evidencia</div>
+    </div>
+    <div class="nota"><span>💡</span><div>
+      <strong>Por qué local:</strong> En <em>sinrodilla</em> todo corre con Ollama en tu máquina.
+      Tus documentos no salen a ningún servidor externo. Cero costo por token, cero privacidad comprometida.
+    </div></div>
+  </div>
+</div>
 
-  <section id="similarity">
-    <div class="slide">
-      <h2>3. <code>search_type="similarity"</code></h2>
-      <span class="tag tag-blue">Búsqueda por similitud</span>
-      <p>Busca los documentos más parecidos semánticamente a la pregunta del usuario.</p>
+<!-- ══════════ SLIDE 2: EMBEDDINGS ══════════ -->
+<div class="slide" style="background:var(--blanco)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--morado)"></div>
+    <div class="slide-title">Embeddings: convertir texto en números</div>
+    <span class="slide-cat">02 — Fundamento</span>
+    <p class="slide-desc">
+      Para buscar por <em>significado</em> en lugar de palabras exactas, el texto se representa como un vector
+      de ~768 números. Eso es un embedding: una huella numérica del significado semántico.
+    </p>
+    <div class="code-label">local_rag/agent.py — _build_retriever()</div>
+    <pre><code><span class="cm"># nomic-embed-text corre 100% local vía Ollama — sin API key, sin costo por token</span>
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> <span class="cl">OllamaEmbeddings</span>
 
-      <pre><code>retriever = vector_store.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 5}
-)</code></pre>
+embedding_model = <span class="cl">OllamaEmbeddings</span>(
+    model=<span class="st">"nomic-embed-text"</span>,       <span class="cm"># pull con: ollama pull nomic-embed-text</span>
+    base_url=<span class="st">"http://localhost:11434"</span>
+)
+vec = embedding_model.<span class="fn">embed_query</span>(<span class="st">"¿Cómo funciona pgvector?"</span>)
+<span class="fn">print</span>(<span class="fn">len</span>(vec))   <span class="cm"># 768 — un número por cada dimensión del espacio semántico</span>
+<span class="fn">print</span>(vec[:<span class="nr">4</span>])   <span class="cm"># [0.082, -0.431, 0.215, 0.769]</span></code></pre>
 
-      <div class="grid">
-        <div class="card">
-          <h3>¿Qué hace?</h3>
-          <p>Compara el vector de la pregunta con los vectores almacenados en PostgreSQL y devuelve los <code>k</code> documentos más cercanos.</p>
-        </div>
-
-        <div class="card">
-          <h3>¿Cuándo usarlo?</h3>
-          <p>Cuando estás construyendo una primera versión de RAG y quieres recuperar los documentos más relevantes de manera sencilla.</p>
-        </div>
-
-        <div class="card">
-          <h3>Ventaja</h3>
-          <p>Es simple, rápido de entender y funciona bien para muchos casos básicos.</p>
-        </div>
-
-        <div class="card">
-          <h3>Riesgo</h3>
-          <p>Siempre intenta devolver documentos, incluso si la pregunta no tiene relación fuerte con la base de conocimiento.</p>
-        </div>
+    <p style="color:var(--suave);margin-bottom:12px;font-size:.9rem"><strong style="color:var(--texto)">Similitud coseno</strong> — cómo PGVector mide qué tan parecidos son dos textos (0 = nada, 1 = idéntico):</p>
+    <div class="score-viz">
+      <div class="score-row">
+        <div class="score-lbl">"sistema de recuperación documental"</div>
+        <div class="score-track"><div class="score-fill" style="width:92%;background:var(--verde)"></div></div>
+        <div class="score-val" style="color:var(--verde)">0.92</div>
       </div>
-
-      <div class="warning">
-        <strong>Ejemplo:</strong> si tu base solo tiene documentos de Harry Potter y el usuario pregunta por impuestos, <code>similarity</code> puede devolver documentos aunque no sean realmente útiles.
+      <div class="score-row">
+        <div class="score-lbl">"búsqueda semántica con vectores"</div>
+        <div class="score-track"><div class="score-fill" style="width:85%;background:var(--verde)"></div></div>
+        <div class="score-val" style="color:var(--verde)">0.85</div>
+      </div>
+      <div class="score-row">
+        <div class="score-lbl">"base de datos PostgreSQL"</div>
+        <div class="score-track"><div class="score-fill" style="width:61%;background:var(--ambar)"></div></div>
+        <div class="score-val" style="color:var(--ambar)">0.61</div>
+      </div>
+      <div class="score-row">
+        <div class="score-lbl">"receta de ajiaco colombiano"</div>
+        <div class="score-track"><div class="score-fill" style="width:14%;background:var(--rojo)"></div></div>
+        <div class="score-val" style="color:var(--rojo)">0.14</div>
       </div>
     </div>
-  </section>
+    <p style="font-size:.78rem;color:var(--suave)">↑ Pregunta: <em>"¿Cómo funciona pgvector?"</em></p>
+    <div class="warn"><span>⚠️</span><div>
+      <strong>Error frecuente:</strong> al principio usamos <code>nomic-embedding-text</code> (con guion de más) y Ollama lanzaba 404.
+      El nombre correcto es <code>nomic-embed-text</code>. Verifica con <code>ollama list</code>.
+    </div></div>
+  </div>
+</div>
 
-  <section id="mmr">
-    <div class="slide">
-      <h2>4. <code>search_type="mmr"</code></h2>
-      <span class="tag tag-orange">Maximal Marginal Relevance</span>
-      <p><strong>MMR</strong> busca documentos relevantes, pero también intenta que no sean repetidos entre sí.</p>
 
-      <pre><code>retriever = vector_store.as_retriever(
-    search_type="mmr",
-    search_kwargs={
-        "k": 5,
-        "fetch_k": 20,
-        "lambda_mult": 0.5
-    }
-)</code></pre>
+<!-- ══════════ SLIDE 3: CHUNKING ══════════ -->
+<div class="slide" style="background:var(--fondo)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--verde)"></div>
+    <div class="slide-title">Chunking: la decisión que más afecta la calidad</div>
+    <span class="slide-cat">03 — Pre-procesamiento</span>
+    <p class="slide-desc">
+      No guardas los documentos enteros en PGVector — los partes en fragmentos (<em>chunks</em>) de tamaño controlado.
+      Un embedding por doc entero es demasiado genérico; uno por chunk es mucho más preciso.
+    </p>
+    <div class="code-label">ingest.py — cómo se cargan los docs</div>
+    <pre><code><span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> <span class="cl">RecursiveCharacterTextSplitter</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> <span class="cl">PyPDFLoader</span>
 
-      <div class="grid">
-        <div class="card">
-          <h3>¿Qué hace?</h3>
-          <p>Primero recupera varios candidatos y luego selecciona documentos que combinen relevancia y diversidad.</p>
-        </div>
+loader = <span class="cl">PyPDFLoader</span>(<span class="st">"documentos/manual_tecnico.pdf"</span>)
+pages  = loader.<span class="fn">load</span>()
 
-        <div class="card">
-          <h3><code>k</code></h3>
-          <p>Cantidad final de documentos que se devuelven al LLM.</p>
-        </div>
+splitter = <span class="cl">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="nr">1000</span>,    <span class="cm"># ~250 palabras por chunk</span>
+    chunk_overlap=<span class="nr">200</span>,  <span class="cm"># 200 chars compartidos entre chunks vecinos</span>
+)
+chunks = splitter.<span class="fn">split_documents</span>(pages)
+<span class="fn">print</span>(<span class="fn">f</span><span class="st">"{len(chunks)} chunks de {len(pages)} páginas"</span>)
 
-        <div class="card">
-          <h3><code>fetch_k</code></h3>
-          <p>Cantidad inicial de candidatos antes de aplicar MMR.</p>
-        </div>
+<span class="cm"># Guarda en PGVector — genera embedding por chunk automáticamente</span>
+vector_store.<span class="fn">add_documents</span>(chunks)</code></pre>
 
-        <div class="card">
-          <h3><code>lambda_mult</code></h3>
-          <p>Controla el balance entre relevancia y diversidad. Un valor de <code>1.0</code> prioriza relevancia; <code>0.0</code> prioriza diversidad.</p>
-        </div>
-      </div>
+    <table>
+      <thead><tr><th>Parámetro</th><th>Efecto</th><th>Cuándo ajustar</th></tr></thead>
+      <tbody>
+        <tr><td><code>chunk_size</code> pequeño (400)</td><td>Chunks precisos pero sin contexto amplio. El LLM puede recibir fragmentos sin coherencia.</td><td>FAQs, párrafos cortos e independientes.</td></tr>
+        <tr><td><code>chunk_size</code> grande (2000)</td><td>Más contexto por chunk pero el embedding es menos específico.</td><td>Documentos narrativos, reportes largos, código.</td></tr>
+        <tr><td><code>chunk_overlap</code> = 0</td><td>Riesgo de perder una idea que cae justo en el corte entre dos chunks.</td><td>Casi nunca recomendado para texto natural.</td></tr>
+        <tr><td><code>chunk_overlap</code> = 200</td><td>Los chunks comparten 200 chars con el vecino — se preserva el hilo de la idea.</td><td>Punto de partida para la mayoría de documentos.</td></tr>
+      </tbody>
+    </table>
+    <div class="tip"><span>🎯</span><div>
+      El chunking es el paso que más afecta la calidad final. Si el agente da respuestas malas,
+      antes de cambiar el modelo o el search_type, revisa si los chunks tienen sentido por sí solos.
+    </div></div>
+  </div>
+</div>
 
-      <div class="success">
-        <strong>Úsalo cuando:</strong> tus documentos tienen muchos chunks parecidos y quieres que el modelo reciba contexto variado.
-      </div>
-    </div>
-  </section>
-
-  <section id="threshold">
-    <div class="slide">
-      <h2>5. <code>search_type="similarity_score_threshold"</code></h2>
-      <span class="tag tag-red">Filtro por relevancia mínima</span>
-      <p>Este tipo de búsqueda solo devuelve documentos si superan un umbral mínimo de similitud.</p>
-
-      <pre><code>retriever = vector_store.as_retriever(
-    search_type="similarity_score_threshold",
-    search_kwargs={
-        "k": 5,
-        "score_threshold": 0.70
-    }
-)</code></pre>
-
-      <div class="grid">
-        <div class="card">
-          <h3>¿Qué hace?</h3>
-          <p>Busca documentos similares, pero descarta aquellos cuya puntuación esté por debajo del umbral definido.</p>
-        </div>
-
-        <div class="card">
-          <h3>¿Cuándo usarlo?</h3>
-          <p>Cuando quieres evitar que el agente responda con contexto débil o no relacionado.</p>
-        </div>
-
-        <div class="card">
-          <h3>Ventaja</h3>
-          <p>Ayuda a reducir alucinaciones en sistemas RAG.</p>
-        </div>
-
-        <div class="card">
-          <h3>Precaución</h3>
-          <p>Si el umbral es demasiado alto, puede no devolver documentos aunque exista información útil.</p>
-        </div>
-      </div>
-
-      <div class="highlight">
-        <strong>Recomendación inicial:</strong> prueba con <code>score_threshold=0.70</code> y ajusta según tus resultados.
-      </div>
-
-      <pre><code>docs = retriever.invoke(question)
-
-if not docs:
-    return "No encontré información suficiente en la base de conocimiento para responder."</code></pre>
-    </div>
-  </section>
-
-  <section id="comparacion">
-    <div class="slide">
-      <h2>6. Comparación de los tres <code>search_type</code></h2>
-
-      <table>
-        <thead>
-          <tr>
-            <th>search_type</th>
-            <th>Qué hace</th>
-            <th>Cuándo usarlo</th>
-            <th>Riesgo principal</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>similarity</code></td>
-            <td>Devuelve los documentos más parecidos.</td>
-            <td>RAG básico, prototipos, primeras pruebas.</td>
-            <td>Puede traer documentos aunque la pregunta no esté bien soportada.</td>
-          </tr>
-          <tr>
-            <td><code>mmr</code></td>
-            <td>Devuelve documentos relevantes y diversos.</td>
-            <td>Cuando hay muchos chunks repetidos o parecidos.</td>
-            <td>Puede dejar por fuera algún documento muy similar pero importante.</td>
-          </tr>
-          <tr>
-            <td><code>similarity_score_threshold</code></td>
-            <td>Devuelve documentos solo si superan un umbral.</td>
-            <td>Cuando quieres controlar alucinaciones y exigir evidencia mínima.</td>
-            <td>Si el umbral es alto, puede no recuperar contexto suficiente.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="recomendacion">
-    <div class="slide">
-      <h2>7. ¿Cuál usar en un proyecto RAG?</h2>
-
-      <div class="grid">
-        <div class="card">
-          <span class="tag tag-blue">Nivel inicial</span>
-          <h3>Usa <code>similarity</code></h3>
-          <p>Ideal para explicar el concepto a estudiantes y validar que PGVector funciona correctamente.</p>
-          <pre><code>search_type="similarity"
-search_kwargs={"k": 5}</code></pre>
-        </div>
-
-        <div class="card">
-          <span class="tag tag-orange">Documentos repetidos</span>
-          <h3>Usa <code>mmr</code></h3>
-          <p>Ideal cuando los chunks son muy parecidos y necesitas contexto más variado.</p>
-          <pre><code>search_type="mmr"
-search_kwargs={
-  "k": 5,
-  "fetch_k": 20,
-  "lambda_mult": 0.5
-}</code></pre>
-        </div>
-
-        <div class="card">
-          <span class="tag tag-red">RAG robusto</span>
-          <h3>Usa <code>similarity_score_threshold</code></h3>
-          <p>Ideal cuando el agente no debe responder si no encuentra información suficiente.</p>
-          <pre><code>search_type="similarity_score_threshold"
-search_kwargs={
-  "k": 5,
-  "score_threshold": 0.70
-}</code></pre>
-        </div>
-      </div>
-
-      <div class="success">
-        <strong>Para un trabajo académico:</strong> recomiendo empezar con <code>similarity</code>, luego probar <code>mmr</code>, y finalmente usar <code>similarity_score_threshold</code> si el objetivo es evitar respuestas sin evidencia.
-      </div>
-    </div>
-
-    <div class="slide">
-      <h2>8. Código final recomendado</h2>
-      <p>Una configuración robusta para un agente RAG sería:</p>
-
-      <pre><code>def get_retriever(vector_store):
-    return vector_store.as_retriever(
-        search_type="similarity_score_threshold",
-        search_kwargs={
-            "k": 5,
-            "score_threshold": 0.70
-        }
+<!-- ══════════ SLIDE 4: RETRIEVER ══════════ -->
+<div class="slide" style="background:var(--blanco)">
+  <div class="slide-inner">
+    <div class="accent"></div>
+    <div class="slide-title">El Retriever y <code style="font-size:1.5rem">search_kwargs</code></div>
+    <span class="slide-cat">04 — LangChain</span>
+    <p class="slide-desc">
+      El <strong>retriever</strong> toma la pregunta, la convierte en vector y busca en PGVector.
+      <code>search_type</code> define la <em>estrategia</em>. <code>search_kwargs</code> son los parámetros que la controlan.
+    </p>
+    <div class="code-label">local_rag/agent.py</div>
+    <pre><code><span class="kw">def</span> <span class="fn">_build_retriever</span>():
+    vector_store = <span class="cl">PGVector</span>(
+        embeddings=embedding_model,
+        collection_name=config.COLLECTION_NAME,  <span class="cm"># nombre de la colección en PostgreSQL</span>
+        connection=config.PG_URI,                 <span class="cm"># postgresql+psycopg://user:pass@host/db</span>
+        use_jsonb=<span class="kw">True</span>                           <span class="cm"># necesario para filtros por metadata</span>
+    )
+    <span class="kw">return</span> vector_store.<span class="fn">as_retriever</span>(
+        search_type=<span class="st">"similarity"</span>,  <span class="cm"># ← cambia esto para cambiar el comportamiento</span>
+        search_kwargs={<span class="st">"k"</span>: <span class="nr">5</span>}
     )</code></pre>
 
-      <p>Y en el flujo del agente:</p>
-
-      <pre><code>docs = retriever.invoke(question)
-
-if not docs:
-    answer = "No encontré información suficiente en la base de conocimiento para responder."
-else:
-    answer = llm.invoke({
-        "question": question,
-        "context": docs
-    })</code></pre>
-
-      <div class="highlight">
-        <strong>Mensaje para estudiantes:</strong> un buen sistema RAG no solo debe responder; también debe saber cuándo no tiene suficiente información.
+    <div class="card-grid">
+      <div class="card">
+        <h3><code>k</code></h3>
+        <p>Cuántos chunks le llegan al LLM como contexto. Más chunks = más info pero más tokens gastados.</p>
+        <pre><code>search_kwargs={<span class="st">"k"</span>: <span class="nr">5</span>}</code></pre>
+      </div>
+      <div class="card">
+        <h3><code>filter</code></h3>
+        <p>Busca solo en docs con cierta metadata. Útil si tienes varias fuentes en la misma colección.</p>
+        <pre><code>search_kwargs={
+  <span class="st">"k"</span>: <span class="nr">4</span>,
+  <span class="st">"filter"</span>: {<span class="st">"source"</span>:
+    <span class="st">"reglamento.pdf"</span>}
+}</code></pre>
+      </div>
+      <div class="card">
+        <h3><code>score_threshold</code></h3>
+        <p>Descarta chunks bajo el umbral. Solo aplica con <code>similarity_score_threshold</code>.</p>
+        <pre><code>search_kwargs={
+  <span class="st">"k"</span>: <span class="nr">5</span>,
+  <span class="st">"score_threshold"</span>:
+    <span class="nr">0.68</span>
+}</code></pre>
+      </div>
+      <div class="card">
+        <h3><code>fetch_k</code> + <code>lambda_mult</code></h3>
+        <p>Solo con MMR. Candidatos iniciales y balance relevancia vs diversidad.</p>
+        <pre><code>search_kwargs={
+  <span class="st">"k"</span>: <span class="nr">5</span>,
+  <span class="st">"fetch_k"</span>: <span class="nr">20</span>,
+  <span class="st">"lambda_mult"</span>:<span class="nr">0.5</span>
+}</code></pre>
       </div>
     </div>
-  </section>
+  </div>
+</div>
 
-  <footer>
-    <p>Mini presentación HTML — LangChain + PGVector + Search Types</p>
-  </footer>
+
+<!-- ══════════ SLIDE 5: SIMILARITY ══════════ -->
+<div class="slide" style="background:var(--fondo)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--azul2)"></div>
+    <div class="slide-title"><code style="color:var(--azul2);font-size:1.6rem">similarity</code> — la más simple</div>
+    <span class="slide-cat">05a — Search Type</span>
+    <p class="slide-desc">
+      Calcula la distancia coseno entre el embedding de la pregunta y todos los vectores en PGVector.
+      Devuelve los <code>k</code> más cercanos <strong>sin importar qué tan similares sean</strong>.
+      Siempre devolverá exactamente <code>k</code> documentos.
+    </p>
+    <div class="code-label">Configuración</div>
+    <pre><code>retriever = vector_store.<span class="fn">as_retriever</span>(
+    search_type=<span class="st">"similarity"</span>,
+    search_kwargs={<span class="st">"k"</span>: <span class="nr">5</span>}
+)
+
+<span class="cm"># Siempre devuelve 5, aunque el mejor score sea 0.18</span>
+docs = retriever.<span class="fn">invoke</span>(<span class="st">"¿cuál es la receta del ajiaco?"</span>)
+<span class="fn">print</span>(<span class="fn">len</span>(docs))  <span class="cm"># 5 — aunque tu base solo tenga docs de Python</span></code></pre>
+
+    <div class="card-grid">
+      <div class="card">
+        <h3>✅ Cuándo usarlo</h3>
+        <p>Desarrollo, exploración inicial, validar que PGVector funciona. Es el punto de partida para entender qué tiene tu base.</p>
+      </div>
+      <div class="card">
+        <h3>⚠️ El riesgo</h3>
+        <p>El LLM puede recibir contexto completamente irrelevante y aún así generar una respuesta, lo que produce alucinaciones.</p>
+      </div>
+    </div>
+    <div class="warn"><span>⚠️</span><div>
+      Si tu base solo tiene docs sobre Python y el usuario pregunta por "receta de ajiaco",
+      <code>similarity</code> igualmente devuelve 5 docs. El LLM inventará una respuesta con contexto inútil.
+    </div></div>
+    <div class="nota"><span>🔍</span><div>
+      <strong>Debug útil:</strong> usa <code>similarity_search_with_score(query, k=10)</code> para ver los scores reales
+      de lo que está recuperando tu base. Esos valores te sirven para calibrar el threshold más adelante.
+    </div></div>
+  </div>
+</div>
+
+<!-- ══════════ SLIDE 6: MMR ══════════ -->
+<div class="slide" style="background:var(--blanco)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--ambar)"></div>
+    <div class="slide-title"><code style="color:var(--ambar);font-size:1.6rem">mmr</code> — cuando los chunks se repiten</div>
+    <span class="slide-cat">05b — Search Type</span>
+    <p class="slide-desc">
+      <strong>Maximal Marginal Relevance</strong>: recupera <code>fetch_k</code> candidatos y luego selecciona
+      los <code>k</code> finales equilibrando <em>relevancia</em> Y <em>diversidad</em> entre ellos.
+    </p>
+    <div class="code-label">Configuración</div>
+    <pre><code>retriever = vector_store.<span class="fn">as_retriever</span>(
+    search_type=<span class="st">"mmr"</span>,
+    search_kwargs={
+        <span class="st">"k"</span>: <span class="nr">5</span>,             <span class="cm"># docs finales que recibe el LLM</span>
+        <span class="st">"fetch_k"</span>: <span class="nr">20</span>,     <span class="cm"># candidatos antes de filtrar — mín. k*3</span>
+        <span class="st">"lambda_mult"</span>: <span class="nr">0.6</span>  <span class="cm"># 0=máx diversidad · 1=máx relevancia</span>
+    }
+)
+<span class="cm"># Sin MMR: el LLM recibe 5 versiones casi iguales del mismo párrafo</span>
+<span class="cm"># Con MMR: 5 fragmentos con información distinta y complementaria</span></code></pre>
+
+    <div class="card-grid">
+      <div class="card"><h3>lambda_mult = 1.0</h3><p>Igual a similarity puro. Solo relevancia. Los docs pueden repetir lo mismo.</p></div>
+      <div class="card"><h3>lambda_mult = 0.6</h3><p>Balance recomendado. Relevante pero con variedad. Buen punto de inicio.</p></div>
+      <div class="card"><h3>lambda_mult = 0.0</h3><p>Máxima diversidad. Puede incluir docs menos relevantes pero muy distintos.</p></div>
+    </div>
+    <div class="ok"><span>✅</span><div>
+      Útil cuando cargaste el mismo reglamento en múltiples versiones o idiomas,
+      o cuando un tema aparece repetido en muchos chunks seguidos del mismo PDF.
+      El LLM recibe contexto variado en lugar de cinco copias de lo mismo.
+    </div></div>
+  </div>
+</div>
+
+<!-- ══════════ SLIDE 7: THRESHOLD ══════════ -->
+<div class="slide" style="background:var(--fondo)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--verde)"></div>
+    <div class="slide-title"><code style="color:var(--verde);font-size:1.1rem">similarity_score_threshold</code></div>
+    <span class="slide-cat">05c — Search Type</span>
+    <p class="slide-desc">
+      Como <code>similarity</code> pero con filtro: solo devuelve docs con score ≥ <code>score_threshold</code>.
+      Si ningún chunk supera el umbral, devuelve lista vacía. El agente <em>debe</em> manejar ese caso.
+    </p>
+    <div class="code-label">Configuración</div>
+    <pre><code>retriever = vector_store.<span class="fn">as_retriever</span>(
+    search_type=<span class="st">"similarity_score_threshold"</span>,
+    search_kwargs={
+        <span class="st">"k"</span>: <span class="nr">5</span>,
+        <span class="st">"score_threshold"</span>: <span class="nr">0.68</span>  <span class="cm"># ajusta según los scores reales de tu base</span>
+    }
+)
+
+docs = retriever.<span class="fn">invoke</span>(question)
+
+<span class="kw">if not</span> docs:
+    <span class="cm"># Mejor decirlo que inventar — esto es lo que hace sinrodilla</span>
+    <span class="kw">return</span> <span class="st">"No tengo información sobre eso en los documentos cargados."</span></code></pre>
+
+    <table>
+      <thead><tr><th>search_type</th><th>¿Devuelve siempre k?</th><th>Parámetros</th><th>Mejor para</th></tr></thead>
+      <tbody>
+        <tr><td><code>similarity</code></td><td>Sí, siempre</td><td><code>k</code></td><td>Desarrollo y exploración</td></tr>
+        <tr><td><code>mmr</code></td><td>Sí (hasta k)</td><td><code>k, fetch_k, lambda_mult</code></td><td>Chunks repetidos o similares</td></tr>
+        <tr><td><code>similarity_score_threshold</code></td><td>No — puede ser 0</td><td><code>k, score_threshold</code></td><td>Producción robusta</td></tr>
+      </tbody>
+    </table>
+    <div class="tip"><span>🎯</span><div>
+      Para ajustar el umbral: usa <code>similarity</code> primero y ejecuta
+      <code>vector_store.similarity_search_with_score(query, k=10)</code>.
+      Los scores que veas te dicen dónde poner el threshold con datos reales, no con intuición.
+    </div></div>
+  </div>
+</div>
+
+
+<!-- ══════════ SLIDE 8: MEMORIA ══════════ -->
+<div class="slide" style="background:var(--blanco)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--morado)"></div>
+    <div class="slide-title">Memoria de sesión: el agente que recuerda</div>
+    <span class="slide-cat">06 — Historial de conversación</span>
+    <p class="slide-desc">
+      Sin memoria, cada pregunta es una conversación nueva. El agente no sabe que hace un momento hablaste de PGVector.
+      <code>RunnableWithMessageHistory</code> envuelve la cadena e inyecta el historial automáticamente.
+    </p>
+    <div class="code-label">local_rag/agent.py — gestión de sesiones</div>
+    <pre><code><span class="cm"># Almacén en RAM — se pierde al reiniciar. Para producción: usar Redis o PostgreSQL</span>
+_session_store: dict[str, <span class="cl">ChatMessageHistory</span>] = {}
+
+<span class="kw">def</span> <span class="fn">get_session_history</span>(session_id: str) -> <span class="cl">ChatMessageHistory</span>:
+    <span class="kw">if</span> session_id <span class="kw">not in</span> _session_store:
+        _session_store[session_id] = <span class="cl">ChatMessageHistory</span>()
+    <span class="kw">return</span> _session_store[session_id]
+
+agent_with_memory = <span class="cl">RunnableWithMessageHistory</span>(
+    chain,
+    get_session_history,
+    input_messages_key=<span class="st">"input"</span>,
+    history_messages_key=<span class="st">"chat_history"</span>
+)
+
+<span class="cm"># Cada usuario tiene su session_id — el historial es independiente</span>
+response = agent_with_memory.<span class="fn">invoke</span>(
+    {<span class="st">"input"</span>: <span class="st">"¿Cuáles son sus ventajas?"</span>},
+    config={<span class="st">"configurable"</span>: {<span class="st">"session_id"</span>: <span class="st">"usuario_42"</span>}}
+)</code></pre>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">🔑</div>
+        <h3>session_id</h3>
+        <p>Clave única por conversación. Puede ser UUID, ID de usuario, o en el CLI una clave fija <code>"cli_session"</code>. Cada sesión tiene su historial propio.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔂</div>
+        <h3>Patrón Singleton</h3>
+        <p>El agente se construye una sola vez. Todas las peticiones comparten la misma instancia — y el mismo <code>_session_store</code>.</p>
+        <pre><code><span class="at">_agent</span> = <span class="kw">None</span>
+<span class="kw">def</span> <span class="fn">get_agent</span>():
+    <span class="kw">global</span> <span class="at">_agent</span>
+    <span class="kw">if</span> <span class="at">_agent</span> <span class="kw">is None</span>:
+        <span class="at">_agent</span> = <span class="fn">build_agent</span>()
+    <span class="kw">return</span> <span class="at">_agent</span></code></pre>
+      </div>
+    </div>
+    <div class="tip"><span>💬</span><div>
+      <strong>Sin memoria:</strong> "¿Cuáles son sus ventajas?" → el agente no sabe de qué hablas.<br>
+      <strong>Con memoria:</strong> tras mencionar PGVector, entiende que "sus ventajas" = ventajas de PGVector.
+    </div></div>
+  </div>
+</div>
+
+<!-- ══════════ SLIDE 9: CONTEXTUALIZACIÓN ══════════ -->
+<div class="slide" style="background:var(--fondo)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--rosa,#DB2777)"></div>
+    <div class="slide-title">El prompt de contextualización</div>
+    <span class="slide-cat">07 — Standalone Question</span>
+    <p class="slide-desc">
+      Con historial, preguntas como <em>"¿y el otro?"</em> son ambiguas fuera de contexto.
+      Si se pasan directamente al retriever, busca algo sin sentido.
+      La solución: el LLM reformula la pregunta para que sea autónoma <em>antes</em> de buscar.
+    </p>
+    <div class="flujo">
+      <div class="fn2 wa">"¿y cómo se configura?"</div><div class="arr">→</div>
+      <div class="fn2 alt">LLM reformula</div><div class="arr">→</div>
+      <div class="fn2 ok">"¿Cómo se configura PGVector en LangChain?"</div><div class="arr">→</div>
+      <div class="fn2">Retriever busca bien</div>
+    </div>
+    <div class="code-label">local_rag/agent.py — CONTEXTUALIZE_PROMPT</div>
+    <pre><code>CONTEXTUALIZE_PROMPT = <span class="st">"""\
+Dado el historial de la conversación y la última pregunta del usuario,
+reformula la pregunta para que sea comprensible SIN el historial.
+NO respondas la pregunta, solo reformúlala si es necesario.
+Si ya es clara, devuélvela tal cual.\
+"""</span>
+
+<span class="cm"># Solo reformulamos si hay historial — primer turno no lo necesita</span>
+<span class="kw">if</span> chat_history:
+    standalone_q = contextualize_chain.<span class="fn">invoke</span>({
+        <span class="st">"input"</span>: user_input,
+        <span class="st">"chat_history"</span>: chat_history
+    })
+<span class="kw">else</span>:
+    standalone_q = user_input</code></pre>
+
+    <table>
+      <thead><tr><th>Turno</th><th>Pregunta del usuario</th><th>Pregunta reformulada</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>"¿Qué es PGVector?"</td><td>"¿Qué es PGVector?" — sin cambio</td></tr>
+        <tr><td>2</td><td>"¿Y cómo se instala?"</td><td>"¿Cómo se instala PGVector en PostgreSQL?"</td></tr>
+        <tr><td>3</td><td>"¿Tiene filtros?"</td><td>"¿PGVector soporta filtros por metadata en LangChain?"</td></tr>
+        <tr><td>4</td><td>"¿Y el otro search_type?"</td><td>"¿Cuáles son los otros search_type disponibles en LangChain además de similarity?"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ SLIDE 10: ERRORES COMUNES ══════════ -->
+<div class="slide" style="background:var(--blanco)">
+  <div class="slide-inner">
+    <div class="accent" style="background:var(--rojo)"></div>
+    <div class="slide-title">Errores reales y cómo resolverlos</div>
+    <span class="slide-cat">08 — Troubleshooting</span>
+    <p class="slide-desc">Cosas que ya pasaron (o van a pasar) en el proyecto:</p>
+
+    <div class="card" style="margin-bottom:14px;border-left:4px solid var(--rojo)">
+      <h3 style="color:var(--rojo)">404 — Ollama no encuentra el modelo</h3>
+      <pre><code><span class="cm"># ❌ Mal</span>
+model=<span class="st">"nomic-embedding-text"</span>   <span class="cm"># no existe</span>
+<span class="cm"># ✅ Bien</span>
+model=<span class="st">"nomic-embed-text"</span>
+<span class="cm"># Verifica con: $ ollama list</span></code></pre>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;border-left:4px solid var(--rojo)">
+      <h3 style="color:var(--rojo)">El agente inventa aunque no tenga información</h3>
+      <pre><code><span class="cm"># Siempre verifica si el retriever encontró algo</span>
+docs = retriever.<span class="fn">invoke</span>(standalone_q)
+<span class="kw">if not</span> docs:
+    <span class="kw">return</span> <span class="st">"No tengo información sobre eso en los documentos."</span></code></pre>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;border-left:4px solid var(--ambar)">
+      <h3 style="color:var(--ambar)">ValueError: session_id fuera del config</h3>
+      <pre><code><span class="cm"># ❌ Mal</span>
+agent.<span class="fn">invoke</span>({<span class="st">"input"</span>: q, <span class="st">"session_id"</span>: <span class="st">"abc"</span>})
+<span class="cm"># ✅ Bien</span>
+agent.<span class="fn">invoke</span>({<span class="st">"input"</span>: q},
+    config={<span class="st">"configurable"</span>: {<span class="st">"session_id"</span>: <span class="st">"abc"</span>}})</code></pre>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--ambar)">
+      <h3 style="color:var(--ambar)">Los chunks recuperados no son los esperados</h3>
+      <pre><code><span class="cm"># Ver qué recupera y con qué score antes de ajustar parámetros</span>
+results = vector_store.<span class="fn">similarity_search_with_score</span>(<span class="st">"tu pregunta"</span>, k=<span class="nr">10</span>)
+<span class="kw">for</span> doc, score <span class="kw">in</span> results:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="st">"{score:.3f} | {doc.page_content[:80]}"</span>)</code></pre>
+    </div>
+
+    <div class="ok" style="margin-top:16px"><span>💬</span><div>
+      <strong>Regla general:</strong> si el sistema falla, descarta primero el retriever
+      (con <code>similarity_search_with_score</code>), luego el prompt, luego el modelo.
+      En RAG el 80% de los problemas están en los datos y el chunking, no en el código.
+    </div></div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+
+<!-- ══════════ UI OVERLAY ══════════ -->
+<div id="ui">
+  <button id="btn-prev" onclick="go(-1)">← Anterior</button>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div id="dots"></div>
+    <div id="counter">1 / 11</div>
+  </div>
+  <button id="btn-next" onclick="go(1)">Siguiente →</button>
+</div>
+
+<script>
+  const deck    = document.getElementById('deck');
+  const dotsEl  = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const slides  = document.querySelectorAll('.slide');
+  const total   = slides.length;
+  let   current = 0;
+
+  // Construir dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.title = `Diapositiva ${i + 1}`;
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    current = Math.max(0, Math.min(total - 1, n));
+    deck.style.transform = `translateX(-${current * 100}vw)`;
+
+    // Scroll al tope del slide que entra
+    setTimeout(() => slides[current].scrollTo({ top: 0, behavior: 'instant' }), 50);
+
+    // Actualizar dots
+    dotsEl.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    counter.textContent = `${current + 1} / ${total}`;
+    btnPrev.disabled = current === 0;
+    btnNext.disabled = current === total - 1;
+  }
+
+  function go(dir) { goTo(current + dir); }
+
+  // Teclado
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End')  goTo(total - 1);
+  });
+
+  // Touch / swipe
+  let tx = 0;
+  deck.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  deck.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  });
+
+  // Estado inicial
+  goTo(0);
+</script>
 </body>
 </html>
