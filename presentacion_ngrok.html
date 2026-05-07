@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngrok - Exposición de API | Universidad EIA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/white.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--eia-blue:#003B5C;--eia-blue-light:#0066A1;--eia-accent:#4DA8DA;--eia-white:#FFFFFF;--eia-gray:#F0F4F8;--eia-dark:#001F33}
+.reveal{font-family:'Inter',sans-serif;color:var(--eia-blue)}
+.reveal .slides section{background:var(--eia-white)}
+.reveal h1,.reveal h2,.reveal h3{color:var(--eia-blue);font-weight:800;text-transform:none;letter-spacing:-0.02em}
+.reveal h1{font-size:2.2em}
+.reveal h2{font-size:1.6em;border-bottom:4px solid var(--eia-accent);padding-bottom:12px;display:inline-block}
+.reveal h3{font-size:1.2em;color:var(--eia-blue-light)}
+.reveal p,.reveal li{font-size:0.72em;line-height:1.6;color:#333}
+.reveal ul{list-style:none;padding-left:0}
+.reveal li::before{content:"▸ ";color:var(--eia-accent);font-weight:bold}
+.reveal code{font-size:0.65em;border-radius:6px}
+.reveal pre{box-shadow:0 8px 32px rgba(0,59,92,0.15);border-radius:10px;border:2px solid var(--eia-accent)}
+.reveal pre code{padding:20px;line-height:1.5}
+.slide-title{background:linear-gradient(135deg,var(--eia-blue) 0%,var(--eia-blue-light) 50%,var(--eia-accent) 100%)!important}
+.slide-title h1,.slide-title h2,.slide-title h3,.slide-title p{color:var(--eia-white)!important}
+.slide-section{background:linear-gradient(135deg,var(--eia-blue) 0%,var(--eia-blue-light) 100%)!important}
+.slide-section h2,.slide-section p{color:var(--eia-white)!important}
+.eia-logo{width:180px;margin-bottom:20px;filter:brightness(0) invert(1)}
+.eia-logo-dark{width:120px;position:fixed;bottom:20px;right:30px;opacity:0.15}
+.badge{display:inline-block;background:var(--eia-accent);color:#fff;padding:4px 14px;border-radius:20px;font-size:0.6em;font-weight:600;margin:3px}
+.card{background:var(--eia-gray);border-radius:12px;padding:20px;margin:10px;border-left:4px solid var(--eia-accent)}
+.card h3{margin-top:0;font-size:0.9em}
+.card p{font-size:0.65em;margin:0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.vs-table{width:100%;border-collapse:collapse;font-size:0.6em;margin-top:16px}
+.vs-table th{background:var(--eia-blue);color:#fff;padding:10px;text-align:left}
+.vs-table td{padding:8px 10px;border-bottom:1px solid #e0e0e0}
+.vs-table tr:nth-child(even){background:var(--eia-gray)}
+.node-flow{display:flex;align-items:center;justify-content:center;gap:8px;margin:20px 0;flex-wrap:wrap}
+.node{background:var(--eia-blue);color:#fff;padding:12px 20px;border-radius:10px;font-size:0.7em;font-weight:600}
+.node.active{background:var(--eia-accent)}
+.node.green{background:#10b981}
+.arrow{color:var(--eia-accent);font-size:1.4em;font-weight:bold}
+.highlight-box{background:linear-gradient(135deg,var(--eia-blue),var(--eia-blue-light));color:#fff;padding:20px;border-radius:12px;margin:16px 0;font-size:0.7em}
+.small{font-size:0.55em;color:#666}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- SLIDE 1: Portada -->
+<section class="slide-title">
+<img src="https://www.eia.edu.co/wp-content/uploads/2023/07/Logo-principal-scaled.webp" class="eia-logo" alt="Universidad EIA">
+<h1>Ngrok</h1>
+<h3>Exposición de API RAG al Mundo</h3>
+<p>Implementación e Integración de Software — Universidad EIA</p>
+<p class="small" style="color:rgba(255,255,255,0.7)">Proyecto SinRodilla</p>
+</section>
+
+<!-- SLIDE 2: Agenda -->
+<section>
+<h2>📋 Agenda</h2>
+<ul>
+<li>¿Cuál es el problema? (El entorno local)</li>
+<li>¿Qué es Ngrok?</li>
+<li>Túneles y su Funcionamiento</li>
+<li>Beneficios y Casos de Uso</li>
+<li>Integración con Docker Compose</li>
+<li>Arquitectura de Nuestra Solución</li>
+<li>Demostración y Tablero de Control</li>
+</ul>
+</section>
+
+<!-- SLIDE 3 -->
+<section class="slide-section">
+<h2>🚧 El Problema del Entorno Local</h2>
+</section>
+
+<!-- SLIDE 4 -->
+<section>
+<h2>El problema</h2>
+<p>Has construido un <strong>Agente RAG con FastAPI</strong> increíble en tu computador. Funciona perfecto en <code>localhost:8000</code>.</p>
+<div class="grid-2">
+<div class="card">
+<h3>💻 Funciona aquí</h3>
+<p>Tú, el desarrollador, puedes hacer peticiones a la API sin problema.</p>
+</div>
+<div class="card" style="border-left-color: #e74c3c;">
+<h3>🚫 Falla allá</h3>
+<p>Tu cliente, profesor o un servicio externo (como un webhook o un frontend web desplegado) <strong>no puede acceder</strong> a tu <code>localhost</code>.</p>
+</div>
+</div>
+<div class="highlight-box">
+<strong>La Solución Tradicional:</strong> Desplegar toda la arquitectura (Postgres, pgvector, Ollama, FastAPI) en AWS, Azure o GCP. Tarea lenta, compleja y costosa.
+</div>
+</section>
+
+<!-- SLIDE 5 -->
+<section class="slide-section">
+<h2>🌐 ¿Qué es Ngrok?</h2>
+</section>
+
+<!-- SLIDE 6 -->
+<section>
+<h2>Conociendo Ngrok</h2>
+<p><strong>Ngrok</strong> es una herramienta que expone servicios de red locales detrás de firewalls y NATs hacia Internet a través de <strong>túneles seguros</strong>.</p>
+<div class="grid-3">
+<div class="card">
+<h3>🔌 Instante</h3>
+<p>Genera una URL pública en segundos sin configurar puertos del router.</p>
+</div>
+<div class="card">
+<h3>🔒 Seguro</h3>
+<p>Túneles encriptados (HTTPS) automáticos sin manejar certificados SSL.</p>
+</div>
+<div class="card">
+<h3>🔬 Inspección</h3>
+<p>Permite capturar, inspeccionar y re-ejecutar el tráfico HTTP.</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 7 -->
+<section>
+<h2>¿Cómo funciona?</h2>
+<div class="node-flow">
+<div class="node green">🌍 Internet (Usuarios)</div>
+<div class="arrow">→</div>
+<div class="node active">☁️ Servidores Ngrok</div>
+<div class="arrow">→</div>
+<div class="node" style="background:#e67e22">🔒 Firewall / Router</div>
+<div class="arrow">→</div>
+<div class="node">🤖 Agente (localhost)</div>
+</div>
+<p style="text-align:left; margin-top: 20px;">
+1. Ngrok Cloud asigna una URL (ej. <code>https://tu-api.ngrok-free.app</code>).<br>
+2. El cliente Ngrok en tu PC inicia una conexión <strong>saliente</strong> hacia la nube.<br>
+3. Las peticiones públicas entran por la nube y bajan por el túnel hacia tu API.<br>
+</p>
+<div class="highlight-box">
+<strong>🔑 Clave:</strong> Como la conexión es de "adentro hacia afuera", bypassa firewalls sin tener que abrir puertos (Port Forwarding).
+</div>
+</section>
+
+<!-- SLIDE 8 -->
+<section class="slide-section">
+<h2>🐳 Integración en Docker</h2>
+</section>
+
+<!-- SLIDE 9 -->
+<section>
+<h2>Arquitectura en el Proyecto</h2>
+<p>Hemos "dockerizado" la API y añadido Ngrok al ecosistema.</p>
+<div class="node-flow" style="font-size: 0.8em;">
+<div class="node green" style="width: 150px;">🌍 Internet</div>
+<div class="arrow">↔</div>
+<div class="node" style="border: 2px dashed #4DA8DA; background:transparent; padding: 10px; color: var(--eia-blue);">
+  <strong>Docker Compose Network</strong>
+  <div style="display:flex; gap: 10px; margin-top:10px;">
+    <div class="node active">🚇 Ngrok<br><code>:4040</code></div>
+    <div class="arrow">↔</div>
+    <div class="node">🌐 FastAPI<br><code>:8000</code></div>
+    <div class="arrow">↔</div>
+    <div class="node">🐘 Postgres + 🦙 Ollama</div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 10 -->
+<section>
+<h2>El Archivo Compose</h2>
+<pre><code class="language-yaml"># compose.yml
+services:
+  # ... (Postgres y Ollama)
+
+  api:
+    build: .
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: rag-ngrok
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command:
+      - "http"
+      - "api:8000" # Apunta directamente al contenedor de la API</code></pre>
+</section>
+
+<!-- SLIDE 11 -->
+<section>
+<h2>¿Qué logramos con esto?</h2>
+<div class="grid-2">
+<div class="card">
+<h3>1. Cero Instalaciones</h3>
+<p>No necesitas instalar Ngrok en tu Mac/PC. Todo corre como un contenedor más en la red virtual.</p>
+</div>
+<div class="card">
+<h3>2. DNS Interno Docker</h3>
+<p>En lugar de apuntar a <code>localhost:8000</code>, el comando es <code>http api:8000</code>, usando la resolución de nombres nativa de Docker.</p>
+</div>
+<div class="card">
+<h3>3. Seguridad del Token</h3>
+<p>El Authtoken se inyecta de forma segura a través del archivo <code>.env</code> sin exponerlo en el código.</p>
+</div>
+<div class="card">
+<h3>4. Un Solo Comando</h3>
+<p><code>docker compose up -d --build</code> despliega todo: base de datos, LLM, API y el túnel al exterior.</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 12 -->
+<section class="slide-section">
+<h2>🚀 Puesta en Marcha</h2>
+</section>
+
+<!-- SLIDE 13 -->
+<section>
+<h2>Paso a Paso</h2>
+<ol>
+  <li><strong>Registrarse en Ngrok:</strong> Obtener el token en dashboard.ngrok.com</li>
+  <li><strong>Configurar entorno:</strong> Añadir en <code>.env</code>:
+    <pre><code class="language-env">NGROK_AUTHTOKEN=tu-token-super-secreto-aqui</code></pre>
+  </li>
+  <li><strong>Levantar todo:</strong>
+    <pre><code class="language-bash">docker compose up -d --build</code></pre>
+  </li>
+  <li><strong>Disfrutar:</strong>
+    <p>Revisar en consola la URL generada: <code>docker compose logs ngrok</code></p>
+  </li>
+</ol>
+</section>
+
+<!-- SLIDE 14 -->
+<section>
+<h2>Dashboard Local (Inspección)</h2>
+<p>Ngrok provee un panel de control web en el puerto local <strong>4040</strong>.</p>
+<div class="highlight-box">
+📍 Visita: <strong>http://localhost:4040</strong>
+</div>
+<ul>
+  <li>Muestra la <strong>URL pública asignada</strong>.</li>
+  <li>Muestra un <strong>historial de todas las peticiones</strong> (headers, body, status).</li>
+  <li>Permite realizar <strong>"Replay"</strong> de una petición con un clic (ideal para testear la API de LangGraph sin reconstruir la petición).</li>
+</ul>
+</section>
+
+<!-- SLIDE 15 -->
+<section class="slide-section">
+<h2>📝 Conclusiones</h2>
+</section>
+
+<!-- SLIDE 16 -->
+<section>
+<h2>Resumen</h2>
+<ul>
+<li>Ngrok es un puente instantáneo entre el exterior (Internet) y el interior (Docker localhost).</li>
+<li>No reemplaza un despliegue de producción definitivo, pero es <strong>vital para la etapa de desarrollo y validación</strong>.</li>
+<li>Gracias a la dockerización de FastAPI, el despliegue es inmutable y escalable en tu máquina.</li>
+<li>Cualquier persona puede ahora ver el Swagger UI de la API accediendo al endpoint <code>/docs</code> con tu enlace temporal HTTPS.</li>
+</ul>
+</section>
+
+<!-- SLIDE 17: Cierre -->
+<section class="slide-title">
+<img src="https://www.eia.edu.co/wp-content/uploads/2023/07/Logo-principal-scaled.webp" class="eia-logo" alt="Universidad EIA">
+<h1>¡Gracias!</h1>
+<h3>¿Preguntas?</h3>
+<p>Universidad EIA — Implementación e Integración de Software</p>
+<p style="margin-top:30px">
+<span class="badge" style="font-size:0.8em">Ngrok</span>
+<span class="badge" style="font-size:0.8em">FastAPI</span>
+<span class="badge" style="font-size:0.8em">Docker Compose</span>
+<span class="badge" style="font-size:0.8em">LangGraph</span>
+</p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script>
+Reveal.initialize({
+hash:true,
+slideNumber:'c/t',
+transition:'slide',
+plugins:[RevealHighlight],
+width:1200,
+height:700
+});
+</script>
+</body>
+</html>

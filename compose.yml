@@ -96,6 +96,41 @@ services:
         echo "    python -m wikipedia_rag --provider ollama"
         echo "════════════════════════════════════════════"
 
+  # ────────────────────────────────────────────────────────────
+  # API — FastAPI Service
+  # ────────────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: rag-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/vectordb
+      - OLLAMA_URL=http://ollama:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+
+  # ────────────────────────────────────────────────────────────
+  # Ngrok — Exponer API a Internet
+  # ────────────────────────────────────────────────────────────
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: rag-ngrok
+    restart: unless-stopped
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command:
+      - "http"
+      - "api:8000"
+    depends_on:
+      - api
+
 volumes:
   pgdata:
     name: rag-pgdata
